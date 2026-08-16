@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stay updated with Google Cloud BigQuery release notes. View, filter, refresh, and tweet release updates easily.">
+    <title>BigQuery Release Notes Explorer & Tweet Hub</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="header-container">
+                <div class="brand-group">
+                    <div class="logo-icon">
+                        <!-- BigQuery SVG Logo -->
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <rect width="24" height="24" rx="6" fill="#1A73E8"/>
+                            <path d="M7 6.5C7 5.67 7.67 5 8.5 5H15.5C16.33 5 17 5.67 17 6.5V11.5C17 12.33 16.33 13 15.5 13H8.5C7.67 13 7 12.33 7 11.5V6.5Z" fill="#FFFFFF" fill-opacity="0.9"/>
+                            <path d="M9 13.5V18.5C9 19.05 9.45 19.5 10 19.5H14C14.55 19.5 15 19.05 15 18.5V13.5H9Z" fill="#8AB4F8"/>
+                            <circle cx="12" cy="9" r="1.5" fill="#1A73E8"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-title-wrap">
+                            <h1>BigQuery Release Notes</h1>
+                            <span class="badge-source">Google Cloud Feed</span>
+                        </div>
+                        <p class="brand-subtitle">Real-time updates, feature changelog & social share hub</p>
+                    </div>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <div class="feed-status" id="feedStatusBadge">
+                        <span class="status-dot"></span>
+                        <span id="lastUpdatedText">Connecting...</span>
+                    </div>
+
+                    <!-- Refresh Button with Spinner -->
+                    <button id="refreshBtn" class="btn btn-primary" title="Refresh feed data (R)">
+                        <svg id="refreshSpinner" class="btn-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                        </svg>
+                        <span id="refreshBtnText">Refresh</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview Banner -->
+        <section class="stats-bar">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <span class="stat-label">Total Release Dates</span>
+                    <span class="stat-value" id="statTotalEntries">—</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Total Update Items</span>
+                    <span class="stat-value" id="statTotalItems">—</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Latest Release</span>
+                    <span class="stat-value text-accent" id="statLatestDate">—</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Feed Source</span>
+                    <a href="https://docs.cloud.google.com/feeds/bigquery-release-notes.xml" target="_blank" rel="noopener noreferrer" class="stat-link">
+                        <span>Atom XML</span>
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Filter & Search Toolbar -->
+            <div class="toolbar">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search releases by keyword, feature, SQL, GA..." aria-label="Search updates">
+                    <button id="clearSearchBtn" class="clear-search-btn" title="Clear search" style="display: none;">&times;</button>
+                    <span class="search-shortcut-hint">/</span>
+                </div>
+
+                <!-- Category Filter Pills -->
+                <div class="filter-pills-scroll" id="categoryFilterContainer">
+                    <button class="pill active" data-category="all">
+                        All <span class="pill-count" id="countAll">0</span>
+                    </button>
+                    <button class="pill" data-category="Feature">
+                        <span class="pill-dot dot-feature"></span>
+                        Features <span class="pill-count" id="countFeature">0</span>
+                    </button>
+                    <button class="pill" data-category="Announcement">
+                        <span class="pill-dot dot-announcement"></span>
+                        Announcements <span class="pill-count" id="countAnnouncement">0</span>
+                    </button>
+                    <button class="pill" data-category="Change">
+                        <span class="pill-dot dot-change"></span>
+                        Changes <span class="pill-count" id="countChange">0</span>
+                    </button>
+                    <button class="pill" data-category="Security">
+                        <span class="pill-dot dot-security"></span>
+                        Security <span class="pill-count" id="countSecurity">0</span>
+                    </button>
+                    <button class="pill" data-category="Issue">
+                        <span class="pill-dot dot-issue"></span>
+                        Issues <span class="pill-count" id="countIssue">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multi-select Action Bar (Hidden by default, shows when items are selected) -->
+            <div id="selectionBar" class="selection-bar" style="display: none;">
+                <div class="selection-info">
+                    <span class="selection-count-badge" id="selectedCountBadge">0</span>
+                    <span>item(s) selected</span>
+                </div>
+                <div class="selection-actions">
+                    <button id="tweetSelectedBtn" class="btn btn-tweet">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        Tweet Selected Updates
+                    </button>
+                    <button id="clearSelectionBtn" class="btn btn-secondary btn-sm">Deselect All</button>
+                </div>
+            </div>
+
+            <!-- Feed Entries Container -->
+            <div id="feedList" class="feed-list">
+                <!-- Skeleton Loader -->
+                <div class="skeleton-entry">
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+                <div class="skeleton-entry">
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+            </div>
+
+            <!-- Empty State Container -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">🔍</div>
+                <h3>No release notes match your filter</h3>
+                <p>Try searching for different keywords or clear the category filters.</p>
+                <button id="resetFiltersBtn" class="btn btn-secondary">Reset Filters</button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>
+                BigQuery Release Notes Explorer &bull; Sourced from <a href="https://docs.cloud.google.com/bigquery/docs/release-notes" target="_blank" rel="noopener noreferrer">Google Cloud Documentation</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Interactive Tweet Composer Modal -->
+    <div id="tweetModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-icon-badge">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 id="modalTitle" class="modal-title">Tweet Release Update</h2>
+                        <p class="modal-subtitle" id="modalSubtitle">Preview, customize & share this BigQuery update</p>
+                    </div>
+                </div>
+                <button id="closeModalBtn" class="modal-close-btn" title="Close (Esc)">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <!-- Source Reference Card -->
+                <div class="source-preview-box">
+                    <div class="source-header">
+                        <span id="modalSourceBadge" class="category-badge badge-feature">Feature</span>
+                        <span id="modalSourceDate" class="source-date">August 13, 2026</span>
+                    </div>
+                    <p id="modalSourceSnippet" class="source-snippet"></p>
+                </div>
+
+                <!-- Template Selector Chips -->
+                <div class="template-section">
+                    <label class="section-label">Tweet Templates:</label>
+                    <div class="template-chips">
+                        <button class="template-chip active" data-template="launch">🚀 New Launch</button>
+                        <button class="template-chip" data-template="feature">⚡ Feature Focus</button>
+                        <button class="template-chip" data-template="tldr">💡 Quick TL;DR</button>
+                        <button class="template-chip" data-template="detailed">📋 Detailed Note</button>
+                    </div>
+                </div>
+
+                <!-- Live Tweet Textarea -->
+                <div class="tweet-editor-container">
+                    <textarea id="tweetTextarea" rows="5" placeholder="Compose your tweet..." aria-label="Tweet text"></textarea>
+                    
+                    <!-- Textarea Footer: Char count & helpers -->
+                    <div class="editor-footer">
+                        <div class="char-count-wrap">
+                            <div class="progress-ring-container">
+                                <svg class="progress-ring" width="26" height="26">
+                                    <circle class="progress-ring-bg" stroke="#334155" stroke-width="2.5" fill="transparent" r="10" cx="13" cy="13"/>
+                                    <circle id="charProgressCircle" class="progress-ring-circle" stroke="#10b981" stroke-width="2.5" stroke-dasharray="62.83" stroke-dashoffset="0" stroke-linecap="round" fill="transparent" r="10" cx="13" cy="13"/>
+                                </svg>
+                            </div>
+                            <span id="charCountDisplay" class="char-count-text">280 left</span>
+                        </div>
+                        <div class="editor-quick-tools">
+                            <button id="copyTweetBtn" class="btn btn-secondary btn-xs">
+                                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                <span>Copy Text</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hashtag Quick Picker -->
+                <div class="hashtags-section">
+                    <label class="section-label">Suggested Hashtags (click to toggle):</label>
+                    <div class="hashtag-pills" id="hashtagPills">
+                        <button class="hashtag-pill" data-tag="#BigQuery">#BigQuery</button>
+                        <button class="hashtag-pill" data-tag="#GoogleCloud">#GoogleCloud</button>
+                        <button class="hashtag-pill" data-tag="#GCP">#GCP</button>
+                        <button class="hashtag-pill" data-tag="#DataEngineering">#DataEngineering</button>
+                        <button class="hashtag-pill" data-tag="#SQL">#SQL</button>
+                        <button class="hashtag-pill" data-tag="#DataAnalytics">#DataAnalytics</button>
+                        <button class="hashtag-pill" data-tag="#CloudData">#CloudData</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div class="modal-footer">
+                <button id="cancelModalBtn" class="btn btn-secondary">Cancel</button>
+                <button id="postTweetIntentBtn" class="btn btn-tweet btn-lg">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    Post on X / Twitter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
